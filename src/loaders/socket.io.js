@@ -7,11 +7,16 @@ export default async ( {httpServer} ) => {
     
   socketioServer.on("connection", socket => {
       
-      socket.on("enter_room", (msg, done) => {
-          console.log(msg);
+      socket.onAny((event)=> console.log("Socket.IO event received :", event))
+      
+      socket.on("enter_room", (roomId, done) => {
+
+          console.log(roomId);
+
           setTimeout(() => {
               done();
-          }, 5000);
+          }, 1000);
+
       })
 
   });
