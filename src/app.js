@@ -1,19 +1,22 @@
 import loaders from './loaders/index.js';
 import express from 'express';
+import http from "http"
+
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
 
   const app = express();
-  const port = process.env.PORT || 3000;
+  const httpServer = http.createServer(app);
 
-  await loaders({ expressApp: app });
+  await loaders({ expressApp: app, httpServer});
 
-  app.listen(port, err => {
+  httpServer.listen(PORT, err => {
     if (err) {
       console.log(err);
       return;
     }
-    console.log(`Server app listening at http://localhost:${port}`);
+    console.log(`Server app listening at http://localhost:${PORT}`);
   });
 }
 
