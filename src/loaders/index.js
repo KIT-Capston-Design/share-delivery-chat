@@ -1,12 +1,19 @@
-import expressLoader from './express.js';
-import socketioLoader from './socket.io.js';
+import expressLoader from "./express.js";
+import socketioLoader from "./socket.io.js";
+import redis from "./redis.js";
 
 export default async ({ expressApp, httpServer }) => {
-
   await expressLoader({ app: expressApp });
-  console.log('Express Intialized');
+  console.log("Express Intialized");
 
   await socketioLoader({ httpServer });
-  console.log('Socket.IO Intialized');
+  console.log("Socket.IO Intialized");
 
-}
+  //redis init
+  try {
+    await redis.init();
+    console.log("Redis Intialized");
+  } catch (error) {
+    console.log(error.message);
+  }
+};
