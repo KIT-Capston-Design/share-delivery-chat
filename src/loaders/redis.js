@@ -1,7 +1,7 @@
 import config from "../config/index.js";
 import { createClient } from "redis";
 
-const client = createClient({ url: config.redisUrl });
+const client = createClient({ url: config.REDIS_URL });
 
 const resolvePromise = (resolve, reject) => {
   return (err, data) => {
