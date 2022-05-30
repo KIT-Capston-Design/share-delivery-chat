@@ -8,7 +8,10 @@ const socket = io({
 const welcome = document.getElementById("welcome");
 const form = welcome.querySelector("form");
 
-//미들웨어에서 err 발생 시 여기로
+socket.on("connect", () => {
+  console.log("socket connected"); // true
+});
+//서버 미들웨어에서 err 발생 시 여기로
 socket.on("connect_error", (data) => {
   console.log(data.message);
 });
@@ -17,8 +20,8 @@ function handleRoomSubmit(event) {
   event.preventDefault();
   const input = form.querySelector("input");
 
-  socket.emit("enter_room", { payload: input.value }, () => {
-    console.log("server is done");
+  socket.emit("enter_room", { payload: input.value }, (result) => {
+    console.log(result);
   });
 
   input.value = "";
