@@ -8,26 +8,38 @@ export default async ({ httpServer }) => {
   //DeliveryRoom 저장 객체
   const roomList = {
     getRoom: async function (roomId) {
-      if (this[roomId] === undefined) {
-        this[roomId] = await redis.client.hGetAll("activated-delivery-room:" + roomId);
+      if (typeof this[roomId] === "undefined") {
+        const room = await redis.client.hGetAll("activated-delivery-room:" + roomId);
 
         //방 미존재의 경우 null 반환
-        if (this[roomId] === null) {
-          console.log("방 미존재");
+        if (
+          room === null ||
+          (room &&
+            Object.keys(room).length === 0 &&
+            (room.constructor === Object || room.constructor === undefined))
+        ) {
           return null;
         }
 
         //유저 id 기록
-        this[roomId].users = new Array();
-        Object.keys(this[roomId]).forEach((key) => {
+        room.users = new Array();
+        Object.keys(room).forEach((key) => {
           if (key.startsWith("users.[")) {
             const idx = parseInt(key.charAt(7));
-            this[roomId].users[idx] = this[roomId][key];
+            room.users[idx] = room[key];
           }
         });
 
-        return this[roomId];
+        this[roomId] = room;
+
+        return room;
       }
+    },
+    amIParticipant: function (roomId, accountId) {
+      for (var participantId of this[roomId].users) {
+        if (participantId == accountId) return true;
+      }
+      return false;
     },
   };
 
@@ -38,13 +50,24 @@ export default async ({ httpServer }) => {
   function connectionHandler(socket) {
     socket.onAny((event) => console.log("Socket.IO event received :", event));
     socket.on("enter_room", enterRoomHandler);
-  }
 
-  async function enterRoomHandler({ payload: roomId }, done) {
-    const room = await roomList.getRoom(roomId);
-    if (room === null) done(`DeliveryRoom ${roomId} is not found`);
+    async function enterRoomHandler({ payload: roomId }, done) {
+      roomId = parseInt(roomId);
 
-    done("success");
+      const room = await roomList.getRoom(roomId);
+
+      //해당하는 방이 존재하지 않을 경우 작업 종료
+      if (room === null) {
+        done(`DeliveryRoom ${roomId} is not found`);
+        return;
+      }
+
+      //참여 권한 체크 (기존 모집글에 참여 중인지)
+
+      roomList.amIParticipant(roomId, socket.decoded.accountId);
+
+      done("success");
+    }
   }
 
   function jwtAuthentication(socket, next) {

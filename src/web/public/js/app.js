@@ -1,5 +1,5 @@
 const token =
-  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwaG9uZU51bWJlciI6IjAxMDAwMDAwMDAxIiwicm9sZSI6IlJPTEVfVVNFUiIsImlzcyI6ImtpdGNkLnNoYXJlLWRlbGl2ZXJ5IiwiZXhwIjoxNjU2NDczODI3fQ.0R0C2K1sRp5cCLZe7ji5sYw-Yns2SsDI7rhv5O7ITZY";
+  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50SWQiOjEsInBob25lTnVtYmVyIjoiMDEwMDAwMDAwMDEiLCJyb2xlIjoiUk9MRV9VU0VSIiwiaXNzIjoia2l0Y2Quc2hhcmUtZGVsaXZlcnkiLCJleHAiOjE2NTY1MDI0Mjd9.gzW_MYwJfzErl0kpj0G5zao5ZPdGOUYCoStt91jF_q4";
 
 const socket = io({
   query: { token },
