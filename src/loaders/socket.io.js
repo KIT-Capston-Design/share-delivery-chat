@@ -52,9 +52,7 @@ export default async ({ httpServer }) => {
     socket.on("enter_room", enterRoomHandler);
 
     async function enterRoomHandler({ payload: roomId }, done) {
-      roomId = parseInt(roomId);
-
-      const room = await roomList.getRoom(roomId);
+      const room = await roomList.getRoom(parseInt(roomId));
 
       //해당하는 방이 존재하지 않을 경우 작업 종료
       if (room === null) {
@@ -62,9 +60,13 @@ export default async ({ httpServer }) => {
         return;
       }
 
-      //참여 권한 체크 (기존 모집글에 참여 중인지)
+      //참여 권한 체크 (api 서버에서 모집글에 참여 중인지)
+      if (!roomList.amIParticipant(parseInt(roomId), socket.decoded.accountId)) {
+        done(`You don't have permission to enter delivery chat room ${roomId} `);
+      }
 
-      roomList.amIParticipant(roomId, socket.decoded.accountId);
+      //방 입장
+      socket.join(roomId);
 
       done("success");
     }
