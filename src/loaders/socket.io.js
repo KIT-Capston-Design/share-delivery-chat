@@ -1,7 +1,11 @@
-import { Server as SocketIO } from "socket.io";
+import { createRequire } from "module";
 import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import redis from "./redis.js";
+
+const require = createRequire(import.meta.url);
+const SocketIO = require("socket.io");
+
 export default async ({ httpServer }) => {
   const socketioServer = new SocketIO(httpServer);
 
@@ -45,10 +49,14 @@ export default async ({ httpServer }) => {
 
   // json web token auth
   socketioServer.use(jwtAuthentication);
+
   socketioServer.on("connection", connectionHandler);
 
   function connectionHandler(socket) {
-    socket.onAny((event) => console.log("Socket.IO event received :", event));
+    socket.use((packet, next) => {
+      console.log("Socket.IO event received :", packet);
+      next();
+    });
     socket.on("enter_room", enterRoomHandler);
 
     async function enterRoomHandler({ payload: roomId }, done) {
@@ -73,6 +81,8 @@ export default async ({ httpServer }) => {
   }
 
   function jwtAuthentication(socket, next) {
+    console.log("Authenticate JWT", socket.handshake.address);
+    console.log(socket);
     if (socket.handshake.query && socket.handshake.query.token) {
       jwt.verify(
         socket.handshake.query.token,
