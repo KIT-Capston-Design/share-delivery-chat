@@ -59,30 +59,45 @@ export default async ({ httpServer }) => {
     });
     socket.on("enter_room", enterRoomHandler);
 
+    socket.on("message", ({ message }, done) => {
+      socket
+        .to(socket.currentRoomId)
+        .emit("message", { accountId: socket.decoded.accountId, message });
+      done();
+    });
+
     async function enterRoomHandler({ payload: roomId }, done) {
       const room = await roomList.getRoom(parseInt(roomId));
 
       //해당하는 방이 존재하지 않을 경우 작업 종료
       if (room === null) {
-        done(`DeliveryRoom ${roomId} is not found`);
+        console.log(`Client ${socket.handshake.address} 방 입장 실패 :: 방을 찾을 수 없음.`);
+        done({ isSuccess: false, roomId, message: `DeliveryRoom is not found` });
         return;
       }
 
       //참여 권한 체크 (api 서버에서 모집글에 참여 중인지)
       if (!roomList.amIParticipant(parseInt(roomId), socket.decoded.accountId)) {
-        done(`You don't have permission to enter delivery chat room ${roomId} `);
+        console.log(
+          `Client ${socket.handshake.address} 방 입장 실패 :: 기존 모집글에 참여중이 유저가 아님.`
+        );
+        done({
+          isSuccess: false,
+          roomId,
+          message: `You don't have permission to enter delivery chat room ${roomId}`,
+        });
       }
 
       //방 입장
       socket.join(roomId);
-
-      done("success");
+      socket.currentRoomId = roomId;
+      console.log(`Client ${socket.handshake.address} 방 입장 성공 `);
+      done({ isSuccess: true, roomId, message: "enter_room success" });
     }
   }
 
   function jwtAuthentication(socket, next) {
-    console.log("Authenticate JWT", socket.handshake.address);
-    console.log(socket);
+    console.log("Socket.IO client auth start", socket.handshake.address);
     if (socket.handshake.query && socket.handshake.query.token) {
       jwt.verify(
         socket.handshake.query.token,
