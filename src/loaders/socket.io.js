@@ -45,6 +45,23 @@ export default async ({ httpServer }) => {
       }
       return false;
     },
+    getExistingChatData: async function (roomId) {
+      // 기존 채팅 데이터 레디스로부터 가져와서 가공
+      const existingMessageList = await redis.client.lRange(
+        `activated-delivery-room:${roomId}:chat`,
+        0,
+        -1
+      );
+
+      const messageList = [];
+      for (let idx = 0; idx < existingMessageList.length; idx++) {
+        const message = JSON.parse(existingMessageList[idx]);
+        message.chatId = idx;
+        messageList.push(message);
+      }
+
+      return messageList;
+    },
   };
 
   // json web token auth
@@ -59,11 +76,21 @@ export default async ({ httpServer }) => {
     });
     socket.on("enter_room", enterRoomHandler);
 
-    socket.on("message", ({ message }, done) => {
-      socket
-        .to(socket.currentRoomId)
-        .emit("message", { accountId: socket.decoded.accountId, message });
-      done();
+    socket.on("message", async ({ text }, done) => {
+      const message = new MessageModel(socket.decoded.accountId, text, Date.now());
+
+      //레디스 리스트에 채팅 내용 저장 후 리스트의 길이 받는다.
+      const listLength = await redis.client.rPush(
+        `activated-delivery-room:${socket.currentRoomId}:chat`,
+        JSON.stringify(message)
+      );
+
+      //리스트의 길이 - 1 == 삽입된 메시지의 idx(id)
+      message.chatId = listLength - 1;
+
+      //방 내 다른 사용자들에게 메시지 송신
+      socket.to(socket.currentRoomId).emit("message", message);
+      done(message.chatId);
     });
 
     async function enterRoomHandler({ payload: roomId }, done) {
@@ -89,10 +116,15 @@ export default async ({ httpServer }) => {
       }
 
       //방 입장
+
+      // 기존 채팅 데이터 가져오기
+      const messageList = await roomList.getExistingChatData(roomId);
+
       socket.join(roomId);
       socket.currentRoomId = roomId;
       console.log(`Client ${socket.handshake.address} 방 입장 성공 `);
-      done({ isSuccess: true, roomId, message: "enter_room success" });
+
+      done({ isSuccess: true, roomId, message: "enter_room success", messageList });
     }
   }
 
@@ -121,3 +153,11 @@ export default async ({ httpServer }) => {
     }
   }
 };
+
+class MessageModel {
+  constructor(accountId, message, sendDateTime) {
+    this.accountId = accountId;
+    this.message = message;
+    this.sendDateTime = sendDateTime;
+  }
+}

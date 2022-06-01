@@ -18,7 +18,13 @@ function handleRoomSubmit(event) {
 
   socket.emit("enter_room", { payload: roomId }, (result) => {
     console.log(result);
+
     if (result.isSuccess) showRoom(roomId);
+
+    // 기존 채팅 내용 display
+    for (const message of result.messageList) {
+      addMessage(message);
+    }
   });
 
   inputs[0].value = "";
@@ -29,11 +35,11 @@ function handleMessageSubmit(event) {
   event.preventDefault();
   const input = room.querySelector("#msg input");
 
-  const message = input.value;
+  const text = input.value;
   input.value = "";
 
-  socket.emit("message", { message }, () => {
-    displayMessage(`You : ${message}`); // 성공 시 내 메시지 바로 display
+  socket.emit("message", { text }, (chatId) => {
+    displayMessage(`You : ${text} (chatId : ${chatId})`); // 성공 시 내 메시지 바로 display
   });
 }
 
@@ -56,8 +62,9 @@ function socketInit(token) {
 }
 
 //메시지 수신 받은 경우
-function addMessage({ accountId, message }) {
-  displayMessage(`${accountId} : ${message}`);
+function addMessage(message) {
+  console.log(message);
+  displayMessage(JSON.stringify(message));
 }
 
 //단순히 화면에 메시지 추가
