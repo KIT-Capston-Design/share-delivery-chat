@@ -116,13 +116,12 @@ export default async ({ httpServer }) => {
       }
 
       //방 입장
-
-      // 기존 채팅 데이터 가져오기
-      const messageList = await roomList.getExistingChatData(roomId);
-
       socket.join(roomId);
       socket.currentRoomId = roomId;
       console.log(`Client ${socket.handshake.address} 방 입장 성공 `);
+
+      // 기존 채팅 데이터 가져오기
+      const messageList = await roomList.getExistingChatData(roomId);
 
       done({ isSuccess: true, roomId, message: "enter_room success", messageList });
     }
