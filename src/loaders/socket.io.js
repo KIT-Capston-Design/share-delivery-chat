@@ -98,7 +98,9 @@ export default async ({ httpServer }) => {
 
       //해당하는 방이 존재하지 않을 경우 작업 종료
       if (room === null) {
-        console.log(`Client ${socket.handshake.address} 방 입장 실패 :: 방을 찾을 수 없음.`);
+        console.log(
+          `Client ${socket.handshake.address} 방 입장 실패 :: 방을 찾을 수 없음. roomId : ${roomId}`
+        );
         done({ isSuccess: false, roomId, message: `DeliveryRoom is not found` });
         return;
       }
@@ -106,7 +108,7 @@ export default async ({ httpServer }) => {
       //참여 권한 체크 (api 서버에서 모집글에 참여 중인지)
       if (!roomList.amIParticipant(parseInt(roomId), socket.decoded.accountId)) {
         console.log(
-          `Client ${socket.handshake.address} 방 입장 실패 :: 기존 모집글에 참여중이 유저가 아님.`
+          `Client ${socket.handshake.address} 방 입장 실패 :: 기존 모집글에 참여중이 유저가 아님. roomId : ${roomId}`
         );
         done({
           isSuccess: false,
